@@ -51,7 +51,7 @@ def split_data(x,y):
     return x_train, y_train, x_test, y_test
 
 def decision_tree(x,y):
-    clf=DecisionTreeClassifier(criterion="gini",min_samples_split=10,random_state=0)
+    clf=DecisionTreeClassifier(criterion="gini",min_samples_split=20,random_state=0)
     clf.fit(x,y)
 
     #cross_val_score(clf, x, y, cv=10)
@@ -139,7 +139,8 @@ def main():
 
     # Confusion Matrix
     cnf_matrix=confusion_matrix(y_test, y_pred)
-    class_names=list(['Dementia','MCI to Dementia','MCI','NL'])
+    #DX: 0: Dementia, 1:MCI to Dementia; 2: MCI; 3: NL
+    class_names=list(['Dementia','MCI','NL','MCI to Dementia'])
     plot_confusion_matrix(cnf_matrix, classes=class_names,title='Confusion matrix')
 
     # Accuracy Calculation
