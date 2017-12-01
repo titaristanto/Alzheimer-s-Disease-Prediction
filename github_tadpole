@@ -12,6 +12,7 @@ from sklearn.metrics import confusion_matrix, accuracy_score
 def load_data():
     os.chdir('C:\\Users\\E460\\PycharmProjects\\untitled3\\CS229\\project')
     df = pd.read_csv('Final_filtered_data.csv')
+    df.sample(frac=1)
     raw_gen=pd.concat([df.iloc[:,1:5],df.iloc[:,6:14]],axis=1,join='inner')
     raw_MRI=df.iloc[:,14:136]
     raw_data=pd.concat([raw_gen,raw_MRI],axis=1,join='inner')
