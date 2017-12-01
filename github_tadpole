@@ -51,7 +51,7 @@ def split_data(x,y):
     return x_train, y_train, x_test, y_test
 
 def decision_tree(x,y):
-    clf=DecisionTreeClassifier(criterion="gini",min_samples_split=20,random_state=0)
+    clf=DecisionTreeClassifier(criterion="gini",min_samples_split=15,random_state=0)
     clf.fit(x,y)
 
     #cross_val_score(clf, x, y, cv=10)
