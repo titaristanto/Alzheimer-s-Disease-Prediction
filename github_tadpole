@@ -35,7 +35,7 @@ def preprocess_data(raw_data):
     xcat=xcat_p.apply(le.fit_transform)
     x=pd.concat([xcat,raw_data_cleaned],axis=1,join='inner')
 
-    # Set 'Group' (Demented or Nondemented) as categorical
+    # Set 'DX' (Demented or Not) as categorical
     y=y_p.apply(le.fit_transform)
     return x,y
 
