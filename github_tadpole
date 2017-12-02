@@ -8,6 +8,9 @@ from sklearn import preprocessing
 import plotly.plotly as py
 import plotly.figure_factory as ff
 from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+
 
 def load_data():
     os.chdir('C:\\Users\\E460\\PycharmProjects\\untitled3\\CS229\\project')
@@ -57,6 +60,44 @@ def decision_tree(x,y):
 
     #cross_val_score(clf, x, y, cv=10)
     return clf
+
+def run_PCA_LDA(X,y,components):
+    y=np.ravel(y)
+    target_names = ['Dementia','MCI','NL','MCI to Dementia']
+
+    pca = PCA(n_components=components)
+    X_r = pca.fit(X).transform(X)
+
+    lda = LinearDiscriminantAnalysis(n_components=components)
+    X_r2 = lda.fit(X, y).transform(X)
+
+    # Percentage of variance explained for each components
+    print('explained variance ratio (first two components): %s'
+          % str(pca.explained_variance_ratio_))
+
+    plt.figure()
+    colors = ['navy', 'turquoise', 'darkorange']
+    lw = 2
+
+    for color, i, target_name in zip(colors, [0, 1, 2], target_names):
+        plt.scatter(X_r[y == i, 0], X_r[y == i, 1], color=color, alpha=.8, lw=lw,
+                    label=target_name)
+    plt.legend(loc='best', shadow=False, scatterpoints=1)
+    plt.title('PCA of Tadpole dataset')
+
+    plt.figure()
+    for color, i, target_name in zip(colors, [0, 1, 2], target_names):
+        plt.scatter(X_r2[y == i, 0], X_r2[y == i, 1], alpha=.8, color=color,
+                    label=target_name)
+    plt.legend(loc='best', shadow=False, scatterpoints=1)
+    plt.title('LDA of Tadpole dataset')
+
+    plt.show()
+
+    x_pca=pd.DataFrame(X_r)
+    x_lda=pd.DataFrame(X_r2)
+    y=pd.DataFrame(y)
+    return x_pca,x_lda,y
 
 def feature_importances(x, clf):
     importances = clf.feature_importances_
@@ -112,6 +153,7 @@ def plot_confusion_matrix(cm, classes,
 
     print(cm)
 
+    plt.figure()
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
     plt.title(title)
     plt.colorbar()
@@ -134,7 +176,8 @@ def plot_confusion_matrix(cm, classes,
 def main():
     raw_data=load_data()
     x,y=preprocess_data(raw_data)
-    x_train, y_train, x_test, y_test=split_data(x,y)
+    x_pca,x_lda=run_PCA_LDA(x,y,components=10)
+    x_train, y_train, x_test, y_test=split_data(x_lda,y)
     clf=decision_tree(x_train, y_train)
     y_pred=clf.predict(x_test)
 
