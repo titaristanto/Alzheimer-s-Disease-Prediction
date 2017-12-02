@@ -11,7 +11,6 @@ from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
-
 def load_data():
     os.chdir('C:\\Users\\E460\\PycharmProjects\\untitled3\\CS229\\project')
     df = pd.read_csv('Final_filtered_data.csv')
@@ -97,7 +96,7 @@ def run_PCA_LDA(X,y,components):
     x_pca=pd.DataFrame(X_r)
     x_lda=pd.DataFrame(X_r2)
     y=pd.DataFrame(y)
-    return x_pca,x_lda,y
+    return x_pca,x_lda
 
 def feature_importances(x, clf):
     importances = clf.feature_importances_
@@ -141,10 +140,7 @@ def plot_confusion_matrix(cm, classes,
                           normalize=False,
                           title='Confusion matrix',
                           cmap=plt.cm.Blues):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    """
+
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
         print("Normalized confusion matrix")
