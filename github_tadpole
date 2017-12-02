@@ -71,7 +71,7 @@ def run_PCA_LDA(X,y,components):
     lda = LinearDiscriminantAnalysis(n_components=components)
     X_r2 = lda.fit(X, y).transform(X)
 
-    # Percentage of variance explained for each components
+    # Percentage of variance explained for each component
     print('explained variance ratio (first two components): %s'
           % str(pca.explained_variance_ratio_))
 
