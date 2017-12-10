@@ -258,12 +258,12 @@ def feature_importances(x, clf):
         header_sorted.append(list(x)[indices[f]])
         print("%d. Feature: %s (%f)" % (f + 1, list(x)[indices[f]], importances[indices[f]]))
 
-    # Plot the feature importances
+    # Plot the feature importance
     plt.figure()
-    plt.title("Feature importances")
-    plt.bar(range(x.shape[1]), importances[indices], color="r", align="center")
-    plt.xticks(range(x.shape[1]), header_sorted)
-    plt.xlim([-1, x.shape[1]])
+    plt.title("Feature importance")
+    plt.barh(range(x.shape[1]), importances[indices], color="r", align="center")
+    plt.yticks(range(x.shape[1]), header_sorted)
+    plt.ylim([-1, x.shape[1]])
     plt.savefig('feature_importance_tadpole.png')
     plt.show()
 
