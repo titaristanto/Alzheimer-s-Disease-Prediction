@@ -214,7 +214,7 @@ def build_pipe(x_train,y_train,x_test,y_test):
 
     pipe_rf = Pipeline([('scl', StandardScaler()),
 			('pca', PCA(n_components=10)),
-			('clf', RandomForestClassifier(n_estimators=20, random_state=0))])
+			('clf', RandomForestClassifier(n_estimators=20, random_state=0))]) # We can change PCA with LinearDiscriminantAnalysis
 
     pipe_et = Pipeline([('scl', StandardScaler()),
 			('pca', PCA(n_components=10)),
