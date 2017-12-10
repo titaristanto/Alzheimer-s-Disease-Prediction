@@ -157,13 +157,14 @@ def split_data(x,y):
     y_test=y.iloc[int(m*train_split)+1:m-1,:]
     return x_train, y_train, x_test, y_test
 
-def decision_tree(x,y):
+def decision_tree(x_train,y_train):
     #clf=DecisionTreeClassifier(criterion="gini",min_samples_split=15,random_state=0)
-    clf = RandomForestClassifier(n_estimators=30,max_depth=3, random_state=0)
-    #clf = ExtraTreesClassifier(n_estimators=80, max_depth=10, random_state=0)
-    clf.fit(x,y)
+    clf = RandomForestClassifier(n_estimators=2,max_depth=1, random_state=0)
+    #clf = ExtraTreesClassifier(_estimators=80, max_depth=30, random_state=0)
+    #clf=AdaBoostClassifier(n_estimators=25, random_state=0)
+    clf.fit(x_train,y_train)
 
-    scores=cross_val_score(clf, x, y['DX'], cv=25)
+    scores=cross_val_score(clf, x_train, y_train['DX'], cv=10)
     print("mean: {:.3f} (std: {:.3f})".format(scores.mean(),scores.std()),end="\n\n" )
     return clf
 
@@ -214,15 +215,15 @@ def build_pipe(x_train,y_train,x_test,y_test):
 
     pipe_rf = Pipeline([('scl', StandardScaler()),
 			('pca', PCA(n_components=10)),
-			('clf', RandomForestClassifier(n_estimators=20, random_state=0))]) # We can change PCA with LinearDiscriminantAnalysis
+			('clf', RandomForestClassifier(n_estimators=2, max_depth=1,random_state=0))])
 
     pipe_et = Pipeline([('scl', StandardScaler()),
 			('pca', PCA(n_components=10)),
-			('clf', ExtraTreesClassifier(n_estimators=20, random_state=0))])
+			('clf', ExtraTreesClassifier(n_estimators=80, max_depth=30, random_state=0))])
 
     pipe_ab = Pipeline([('scl', StandardScaler()),
 			('pca', PCA(n_components=10)),
-			('clf', AdaBoostClassifier(n_estimators=20, random_state=0))])
+			('clf', AdaBoostClassifier(n_estimators=25, random_state=0))])
 
     pipelines = [pipe_dt, pipe_rf, pipe_et,pipe_ab]
     pipe_dict = {0: 'Decision Tree', 1: 'Random Forest', 2: 'Extra Tree',3: "AdaBoost"}
