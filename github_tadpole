@@ -4,35 +4,120 @@ import matplotlib.pyplot as plt
 import os, itertools, subprocess
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier, export_graphviz
-from sklearn import preprocessing
+from sklearn import preprocessing,tree
 import plotly.plotly as py
 import plotly.figure_factory as ff
 from sklearn.metrics import confusion_matrix, accuracy_score
 from sklearn.decomposition import PCA
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import  cross_val_score
+from sklearn.ensemble import RandomForestClassifier,ExtraTreesClassifier,AdaBoostClassifier
 
 def load_data():
-    os.chdir('C:\\Users\\E460\\PycharmProjects\\untitled3\\CS229\\project')
-    df = pd.read_csv('Final_filtered_data.csv')
+    os.chdir('C:\\Users\\E460\\PycharmProjects\\untitled3\\CS229\\project\\Tadpole')
+    df = pd.read_csv('TADPOLE_D1_D2.csv',low_memory=False)
     df.sample(frac=1)
-    raw_gen=pd.concat([df.iloc[:,1:5],df.iloc[:,6:14]],axis=1,join='inner')
-    raw_MRI=df.iloc[:,14:136]
-    raw_data=pd.concat([raw_gen,raw_MRI],axis=1,join='inner')
+    raw_gen=df.loc[:,['AGE', 'PTGENDER', 'PTEDUCAT', 'PTMARRY','APOE4','DX']]
+    raw_cognitive_test=df.loc[:,['CDRSB', 'ADAS11', 'MMSE', 'RAVLT_immediate']]
+    raw_MRI=df.loc[:,['Ventricles', 'Hippocampus', 'WholeBrain', 'Entorhinal', 'Fusiform','MidTemp']]
+    raw_PET=df.loc[:,['FDG','AV45']]
+    raw_CSF=df.loc[:,['ABETA_UPENNBIOMK9_04_19_17','TAU_UPENNBIOMK9_04_19_17','PTAU_UPENNBIOMK9_04_19_17']]
+
+    # Other Raw Data
+    raw_other=df.loc[:,['CEREBELLUMGREYMATTER_UCBERKELEYAV45_10_17_16',
+        'WHOLECEREBELLUM_UCBERKELEYAV45_10_17_16',
+        'ERODED_SUBCORTICALWM_UCBERKELEYAV45_10_17_16',
+        # 'COMPOSITE_REF_UCBERKELEYAV45_10_17_16', # NOT AVAILABLE
+        'FRONTAL_UCBERKELEYAV45_10_17_16',
+        'CINGULATE_UCBERKELEYAV45_10_17_16',
+        'PARIETAL_UCBERKELEYAV45_10_17_16',
+        'TEMPORAL_UCBERKELEYAV45_10_17_16',
+        'SUMMARYSUVR_WHOLECEREBNORM_UCBERKELEYAV45_10_17_16',
+        'SUMMARYSUVR_WHOLECEREBNORM_1.11CUTOFF_UCBERKELEYAV45_10_17_16',
+        'SUMMARYSUVR_COMPOSITE_REFNORM_UCBERKELEYAV45_10_17_16',
+        'SUMMARYSUVR_COMPOSITE_REFNORM_0.79CUTOFF_UCBERKELEYAV45_10_17_16',
+        'BRAINSTEM_UCBERKELEYAV45_10_17_16',
+        'BRAINSTEM_SIZE_UCBERKELEYAV45_10_17_16',
+        'VENTRICLE_3RD_UCBERKELEYAV45_10_17_16',
+        'VENTRICLE_3RD_SIZE_UCBERKELEYAV45_10_17_16',
+        'VENTRICLE_4TH_UCBERKELEYAV45_10_17_16',
+        'VENTRICLE_4TH_SIZE_UCBERKELEYAV45_10_17_16',
+        'VENTRICLE_5TH_UCBERKELEYAV45_10_17_16',
+        'VENTRICLE_5TH_SIZE_UCBERKELEYAV45_10_17_16',
+        'CC_ANTERIOR_UCBERKELEYAV45_10_17_16',
+        'CC_ANTERIOR_SIZE_UCBERKELEYAV45_10_17_16',
+        'CC_CENTRAL_UCBERKELEYAV45_10_17_16',
+        'CC_CENTRAL_SIZE_UCBERKELEYAV45_10_17_16',
+        'CC_MID_ANTERIOR_UCBERKELEYAV45_10_17_16',
+        'CC_MID_ANTERIOR_SIZE_UCBERKELEYAV45_10_17_16',
+        'CC_MID_POSTERIOR_UCBERKELEYAV45_10_17_16',
+        'CC_MID_POSTERIOR_SIZE_UCBERKELEYAV45_10_17_16',
+        'CC_POSTERIOR_UCBERKELEYAV45_10_17_16',
+        'CC_POSTERIOR_SIZE_UCBERKELEYAV45_10_17_16',
+        'CSF_UCBERKELEYAV45_10_17_16',
+        'CSF_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_BANKSSTS_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_BANKSSTS_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_CAUDALANTERIORCINGULATE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_CAUDALANTERIORCINGULATE_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_CAUDALMIDDLEFRONTAL_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_CAUDALMIDDLEFRONTAL_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_CUNEUS_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_CUNEUS_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_ENTORHINAL_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_ENTORHINAL_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_FRONTALPOLE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_FRONTALPOLE_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_FUSIFORM_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_FUSIFORM_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_INFERIORPARIETAL_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_INFERIORPARIETAL_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_INFERIORTEMPORAL_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_INFERIORTEMPORAL_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_INSULA_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_INSULA_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_ISTHMUSCINGULATE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_ISTHMUSCINGULATE_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_LATERALOCCIPITAL_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_LATERALOCCIPITAL_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_LATERALORBITOFRONTAL_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_LATERALORBITOFRONTAL_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_LINGUAL_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_LINGUAL_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_MEDIALORBITOFRONTAL_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_MEDIALORBITOFRONTAL_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_MIDDLETEMPORAL_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_MIDDLETEMPORAL_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_PARACENTRAL_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_PARACENTRAL_SIZE_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_PARAHIPPOCAMPAL_UCBERKELEYAV45_10_17_16',
+        'CTX_LH_PARAHIPPOCAMPAL_SIZE_UCBERKELEYAV45_10_17_16',
+        ]]
+
+    raw_data=pd.concat([raw_gen,raw_cognitive_test,raw_MRI,raw_PET,raw_CSF,raw_other],axis=1,join='inner')
     return raw_data
 
 def preprocess_data(raw_data):
-    # Dropping missing values
-    raw_data_cleaned=raw_data.dropna()
-    raw_data_cleaned=raw_data_cleaned[(raw_data_cleaned.iloc[:,14:136]!=' ').all(1)]
+    # Drop missing values
+    raw_data_cleaned=raw_data.dropna(how='any')
+
+    #raw_data_cleaned=raw_data_cleaned[(raw_data_cleaned!=' ').all(1)]
+
+    # Convert 'DX' to 2 labels only: MCI is considered Dementia
+    raw_data_cleaned=conv_binary(raw_data_cleaned)
 
     # Set some features as categorical
-    xcat_p = raw_data_cleaned[['PTGENDER','PTMARRY']]
-    raw_data_cleaned.drop(['DX_bl','PTGENDER','PTMARRY'], axis=1, inplace=True)
+    xcat_p = raw_data_cleaned[['PTGENDER','PTMARRY','APOE4']]
+    raw_data_cleaned.drop(['PTGENDER','PTMARRY','APOE4'], axis=1, inplace=True)
     #PTGENDER: 0:Female; 1: Male -- #PTMARRY: 0:Divorced; 1: Married; 2: Never Married 4:Widowed
 
     y_p = raw_data_cleaned[['DX']]
     raw_data_cleaned.drop(['DX'], axis=1, inplace=True)
-    #DX: 0: Dementia, 1:MCI to Dementia; 2: MCI; 3: NL
+    #DX: 0: Dementia, 1:Normal
 
     le = preprocessing.LabelEncoder()
     xcat=xcat_p.apply(le.fit_transform)
@@ -40,8 +125,27 @@ def preprocess_data(raw_data):
 
     # Set 'DX' (Demented or Not) as categorical
     y=y_p.apply(le.fit_transform)
-    return x,y
+    comb=pd.concat([x,y],axis=1,join='inner')
+    clean_comb=clean_data(comb)
 
+    y = clean_comb[['DX']]
+    clean_comb.drop(['DX'], axis=1, inplace=True)
+    return clean_comb,y
+
+def clean_data(raw_data):
+    xnum= raw_data.apply(pd.to_numeric, errors='coerce')
+    xnum = xnum.dropna()
+    return xnum
+
+def conv_binary(raw_data_cleaned):
+    # Converting 'DX' to 2 labels only: MCI is considered Dementia
+    raw_data_cleaned=raw_data_cleaned.replace('Dementia to MCI', 'Dementia')
+    raw_data_cleaned=raw_data_cleaned.replace('MCI', 'Dementia')
+    raw_data_cleaned=raw_data_cleaned.replace('MCI to Dementia', 'Dementia')
+    raw_data_cleaned=raw_data_cleaned.replace('NL to MCI', 'Dementia')
+    raw_data_cleaned=raw_data_cleaned.replace('MCI to NL', 'Dementia')
+    raw_data_cleaned=raw_data_cleaned.replace('NL to Dementia', 'Dementia')
+    return raw_data_cleaned
 
 def split_data(x,y):
     train_split=0.7 # fraction of the data used in the training set
@@ -54,15 +158,18 @@ def split_data(x,y):
     return x_train, y_train, x_test, y_test
 
 def decision_tree(x,y):
-    clf=DecisionTreeClassifier(criterion="gini",min_samples_split=15,random_state=0)
+    #clf=DecisionTreeClassifier(criterion="gini",min_samples_split=15,random_state=0)
+    clf = RandomForestClassifier(n_estimators=30,max_depth=3, random_state=0)
+    #clf = ExtraTreesClassifier(n_estimators=80, max_depth=10, random_state=0)
     clf.fit(x,y)
 
-    #cross_val_score(clf, x, y, cv=10)
+    scores=cross_val_score(clf, x, y['DX'], cv=25)
+    print("mean: {:.3f} (std: {:.3f})".format(scores.mean(),scores.std()),end="\n\n" )
     return clf
 
 def run_PCA_LDA(X,y,components):
     y=np.ravel(y)
-    target_names = ['Dementia','MCI','NL','MCI to Dementia']
+    target_names = ['Dementia','Normal']
 
     pca = PCA(n_components=components)
     X_r = pca.fit(X).transform(X)
@@ -78,25 +185,66 @@ def run_PCA_LDA(X,y,components):
     colors = ['navy', 'turquoise', 'darkorange']
     lw = 2
 
-    for color, i, target_name in zip(colors, [0, 1, 2], target_names):
+    for color, i, target_name in zip(colors, [0, 1], target_names):
         plt.scatter(X_r[y == i, 0], X_r[y == i, 1], color=color, alpha=.8, lw=lw,
                     label=target_name)
     plt.legend(loc='best', shadow=False, scatterpoints=1)
     plt.title('PCA of Tadpole dataset')
+    plt.savefig('PCA_tadpole.png')
 
     plt.figure()
-    for color, i, target_name in zip(colors, [0, 1, 2], target_names):
+    for color, i, target_name in zip(colors, [0, 1], target_names):
         plt.scatter(X_r2[y == i, 0], X_r2[y == i, 1], alpha=.8, color=color,
                     label=target_name)
     plt.legend(loc='best', shadow=False, scatterpoints=1)
     plt.title('LDA of Tadpole dataset')
+    plt.savefig('LDA_tadpole.png')
 
     plt.show()
 
     x_pca=pd.DataFrame(X_r)
     x_lda=pd.DataFrame(X_r2)
-    y=pd.DataFrame(y)
-    return x_pca,x_lda
+
+    return pca,lda,x_pca,x_lda
+
+def build_pipe(x_train,y_train,x_test,y_test):
+    pipe_dt = Pipeline([('scl', StandardScaler()),
+			('pca', PCA(n_components=10)),
+			('clf', tree.DecisionTreeClassifier(random_state=0))])
+
+    pipe_rf = Pipeline([('scl', StandardScaler()),
+			('pca', PCA(n_components=10)),
+			('clf', RandomForestClassifier(n_estimators=20, random_state=0))])
+
+    pipe_et = Pipeline([('scl', StandardScaler()),
+			('pca', PCA(n_components=10)),
+			('clf', ExtraTreesClassifier(n_estimators=20, random_state=0))])
+
+    pipe_ab = Pipeline([('scl', StandardScaler()),
+			('pca', PCA(n_components=10)),
+			('clf', AdaBoostClassifier(n_estimators=20, random_state=0))])
+
+    pipelines = [pipe_dt, pipe_rf, pipe_et,pipe_ab]
+    pipe_dict = {0: 'Decision Tree', 1: 'Random Forest', 2: 'Extra Tree',3: "AdaBoost"}
+    for pipe in pipelines:
+	    pipe.fit(x_train, y_train)
+
+    # Compare accuracies
+    for idx, val in enumerate(pipelines):
+        print('%s pipeline training accuracy: %.3f' % (pipe_dict[idx], val.score(x_train, y_train)))
+        print('%s pipeline test accuracy: %.3f' % (pipe_dict[idx], val.score(x_test, y_test)))
+
+    # Identify the most accurate model on test data
+    best_acc = 0.0
+    best_clf = 0
+    best_pipe = ''
+    for idx, val in enumerate(pipelines):
+        if val.score(x_test, y_test) > best_acc:
+            best_acc = val.score(x_test, y_test)
+            best_pipe = val
+            best_clf = idx
+    print('Classifier with best accuracy: %s' % pipe_dict[best_clf])
+
 
 def feature_importances(x, clf):
     importances = clf.feature_importances_
@@ -118,17 +266,41 @@ def feature_importances(x, clf):
     plt.savefig('feature_importance_tadpole.png')
     plt.show()
 
-def visualize_tree(tree, feature_names):
-    with open("dt.dot", 'w') as f:
-        export_graphviz(tree, out_file=f,
-                        feature_names=feature_names)
+def bar_chart():
+    # data to plot
+    os.chdir('C:\\Users\\E460\\PycharmProjects\\untitled3\\CS229\\project\\Tadpole')
+    df = pd.read_csv('Recap.csv')
+    n_groups=df.shape[0]
+    index_df=df.loc[:,['Method(s)']]
+    index_name=[index_df.values[i][0] for i in range(index_df.shape[0])]
+    train_acc=df.loc[:,['Training Accuracy']]
+    test_acc=df.loc[:,['Test Accuracy']]
 
-    command = ["dot", "-Tpng", "dt.dot", "-o", "dt.png"]
-    try:
-        subprocess.check_call(command)
-    except:
-        exit("Could not run dot, ie graphviz, to "
-             "produce visualization")
+    # create plot
+    fig, ax = plt.subplots()
+    index = np.arange(n_groups)
+    bar_width = 0.35
+    opacity = 0.8
+
+    rects1 = plt.barh(index, train_acc.values, bar_width,
+                     alpha=opacity,
+                     color='b',
+                     label='Training Acc')
+
+    rects2 = plt.barh(index + bar_width, test_acc.values, bar_width,
+                     alpha=opacity,
+                     color='g',
+                     label='Test Acc')
+
+    plt.xlabel('Accuracy')
+    plt.ylabel('Methods')
+    plt.title('Accuracy Comparison')
+    plt.yticks(index + bar_width, index_name)
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
+    plt.savefig('alg comparison.png')
 
 def scatterplot_matrix(x,y):
     dat=pd.concat([x,y],axis=1,join='inner')
@@ -172,15 +344,17 @@ def plot_confusion_matrix(cm, classes,
 def main():
     raw_data=load_data()
     x,y=preprocess_data(raw_data)
-    x_pca,x_lda=run_PCA_LDA(x,y,components=10)
-    x_train, y_train, x_test, y_test=split_data(x_lda,y)
+    x_train, y_train, x_test, y_test=split_data(x,y)
+    #pca,lda,x_pca_train,x_lda_train=run_PCA_LDA(x_train,y_train,components=10)
     clf=decision_tree(x_train, y_train)
+    #x_lda_test=lda.transform(x_test)
+    #x_pca_test=pca.transform(x_test)
     y_pred=clf.predict(x_test)
 
     # Confusion Matrix
     cnf_matrix=confusion_matrix(y_test, y_pred)
     #DX: 0: Dementia, 1:MCI to Dementia; 2: MCI; 3: NL
-    class_names=list(['Dementia','MCI','NL','MCI to Dementia'])
+    class_names=list(['Dementia','Normal'])
     plot_confusion_matrix(cnf_matrix, classes=class_names,title='Confusion matrix')
 
     # Accuracy Calculation
@@ -192,8 +366,15 @@ def main():
     # Feature Importances
     feature_importances(x_train,clf)
 
+    # Perform Comparison using Pipeline
+    build_pipe(x_train,y_train,x_test,y_test)
+
+    # Algorithm Comparison
+    bar_chart()
+
     # Tree Visualization
-    #visualize_tree(clf,class_names))
+    tree.export_graphviz(clf, out_file = 'tree2.dot', feature_names = list(x_train))
+    # open .dot file in a text editor and copy all the text to http://webgraphviz.com to generate a tree structure
 
 if __name__ == '__main__':
     main()
