@@ -1,0 +1,9 @@
+Method(s),Training Score,Dev Score,Test Score
+Random Forest + LDA,0.993,0.938,0.912
+Adaboost + PCA,0.958,0.91,0.891
+Adaboost + LDA,1,0.91,0.883
+Polynomial Kernel SVM (C=.05) + LDA,1,0.86,0.912
+Linear SVM (C=1) + LDA,0.998,0.873,0.883
+NN with Logistic Activation + LDA,0.997,0.88,0.912
+NN with ReLU Activation + LDA,0.997,0.873,0.905
+NN with Logistic Activation + LDA + Regularization,0.997,0.877,0.912
