@@ -40,14 +40,14 @@ def load_data():
     and label (having AD or not). The input file is stored on-line.
     :return: A pandas dataframe of raw data
     """
-    url='https://raw.githubusercontent.com/titaristanto/Alzheimer-s-Disease-Prediction/master/alzheimer_input.csv'
+    url = 'https://raw.githubusercontent.com/titaristanto/Alzheimer-s-Disease-Prediction/master/alzheimer_input.csv'
     df = pd.read_csv(url,low_memory=False)
     #df=shuffle(df)
-    raw_gen=df.loc[:,['AGE', 'PTGENDER', 'PTEDUCAT', 'PTMARRY','APOE4','DX']]
-    raw_cognitive_test=df.loc[:,['ADAS11', 'MMSE', 'RAVLT_immediate']]
-    raw_MRI=df.loc[:,['Ventricles', 'Hippocampus', 'WholeBrain', 'Entorhinal', 'Fusiform','MidTemp']]
-    raw_PET=df.loc[:,['FDG','AV45']]
-    raw_CSF=df.loc[:,['ABETA_UPENNBIOMK9_04_19_17','TAU_UPENNBIOMK9_04_19_17','PTAU_UPENNBIOMK9_04_19_17']]
+    raw_gen = df.loc[:,['AGE', 'PTGENDER', 'PTEDUCAT', 'PTMARRY','APOE4','DX']]
+    raw_cognitive_test = df.loc[:,['ADAS11', 'MMSE', 'RAVLT_immediate']]
+    raw_MRI = df.loc[:,['Ventricles', 'Hippocampus', 'WholeBrain', 'Entorhinal', 'Fusiform','MidTemp']]
+    raw_PET = df.loc[:,['FDG','AV45']]
+    raw_CSF = df.loc[:,['ABETA_UPENNBIOMK9_04_19_17','TAU_UPENNBIOMK9_04_19_17','PTAU_UPENNBIOMK9_04_19_17']]
 
     # Other Raw Data
     raw_biomarkers=df.loc[:,['CEREBELLUMGREYMATTER_UCBERKELEYAV45_10_17_16',
@@ -296,7 +296,7 @@ def preprocess_data(raw_data):
     """This function 'cleans' the raw data from missing data points and converts some
     variables from numerical into categorical using label encoder"""
     # Drops missing values
-    raw_data_cleaned=raw_data.dropna(how='any')
+    raw_data_cleaned=raw_data.dropna(how = 'any')
 
     # Converts 'DX' to 2 labels only: MCI is considered Dementia
     raw_data_cleaned=conv_binary(raw_data_cleaned)
@@ -312,11 +312,11 @@ def preprocess_data(raw_data):
 
     le = preprocessing.LabelEncoder()
     xcat=xcat_p.apply(le.fit_transform)
-    x=pd.concat([xcat,raw_data_cleaned],axis=1,join='inner')
+    x=pd.concat([xcat,raw_data_cleaned], axis=1, join='inner')
 
     # Sets 'DX' (AD or Not) as categorical
     y=y_p.apply(le.fit_transform)
-    comb=pd.concat([x,y],axis=1,join='inner')
+    comb=pd.concat([x,y], axis=1, join='inner')
     clean_comb=clean_data(comb)
 
     y = clean_comb[['DX']]
@@ -349,25 +349,25 @@ def conv_binary2(raw_data_cleaned):
     raw_data_cleaned=raw_data_cleaned.replace('NL to Dementia', 'Dementia')
     return raw_data_cleaned
 
-def split_data(x,y):
+def split_data(x, y):
     """This function splits the data into training and test data"""
     train_split=0.8 # fraction of the data set used in the training set
     m=x.shape[0] # number of data points
 
-    x_train=x.iloc[0:int(m*train_split),:]
-    y_train=y.iloc[0:int(m*train_split),:]
-    x_test=x.iloc[int(m*train_split)+1:m-1,:]
-    y_test=y.iloc[int(m*train_split)+1:m-1,:]
+    x_train = x.iloc[0:int(m*train_split),:]
+    y_train = y.iloc[0:int(m*train_split),:]
+    x_test = x.iloc[int(m*train_split)+1:m-1,:]
+    y_test = y.iloc[int(m*train_split)+1:m-1,:]
     return x_train, y_train, x_test, y_test
 
-def decision_tree(x_train,y_train):
+def decision_tree(x_train, y_train):
     """This function trains the inputted pair of features and label, then returns the trained classifier.
     Cross-validation is performed to avoid overfitting"""
     #clf=DecisionTreeClassifier(criterion="gini",min_samples_split=15,random_state=0)
     clf = RandomForestClassifier(n_estimators=80,max_depth=5, random_state=0)
     #clf = ExtraTreesClassifier(n_estimators=80, max_depth=30, random_state=0)
     #clf=AdaBoostClassifier(n_estimators=25, random_state=0)
-    clf.fit(x_train,y_train)
+    clf.fit(x_train, y_train)
 
     scores=cross_val_score(clf, x_train, y_train['DX'], cv=10)
     print("cross_val_score mean: {:.3f} (std: {:.3f})".format(scores.mean(),scores.std()),end="\n\n" )
@@ -407,7 +407,7 @@ def kfold_CV(models, x, y, k=10):
       print("Average Dev Testing Score : ", sum_dev_test/k)
 
 
-def run_PCA_LDA(X,y,xtest,components):
+def run_PCA_LDA(X, y, xtest, components):
     """
     This function runs both PCA and LDA to compress the number of features, aiming to reduce the
     overall variance of the data. PCA only requires feature matrix (unsupervised learning), while
@@ -418,7 +418,7 @@ def run_PCA_LDA(X,y,xtest,components):
     :param components: number of desired compressed features
     :return:
     """
-    y=np.ravel(y)
+    y = np.ravel(y)
     target_names = ['Dementia', 'NL'] # 'MCI','NL','MCI to Dementia']
 
     pca = PCA(n_components=components)
@@ -432,14 +432,14 @@ def run_PCA_LDA(X,y,xtest,components):
     # print('xr2', X_r2.shape)
     Xtest_r2 = lda1.transform(xtest)
 
-    x_pca=pd.DataFrame(X_r)
-    x_lda=pd.DataFrame(X_r2)
-    xtest_pca=pd.DataFrame(Xtest_r)
-    xtest_lda=pd.DataFrame(Xtest_r2)
+    x_pca = pd.DataFrame(X_r)
+    x_lda = pd.DataFrame(X_r2)
+    xtest_pca = pd.DataFrame(Xtest_r)
+    xtest_lda = pd.DataFrame(Xtest_r2)
     y=pd.DataFrame(y)
-    return x_pca,x_lda,xtest_pca,xtest_lda
+    return x_pca, x_lda, xtest_pca, xtest_lda
 
-def run_PCA_LDA1(X,y,components):
+def run_PCA_LDA1(X, y, components):
     """
     This function runs both PCA and LDA to compress the number of features, aiming to reduce the
     overall variance of the data. This function also displays the transformed dataset on a 2D-plot in which
@@ -450,7 +450,7 @@ def run_PCA_LDA1(X,y,components):
     :param components: number of desired compressed features
     :return:
     """
-    y=np.ravel(y)
+    y = np.ravel(y)
     target_names = ['Dementia','Normal']
 
     pca = PCA(n_components=components)
@@ -484,12 +484,12 @@ def run_PCA_LDA1(X,y,components):
 
     plt.show()
 
-    x_pca=pd.DataFrame(X_r)
-    x_lda=pd.DataFrame(X_r2)
+    x_pca = pd.DataFrame(X_r)
+    x_lda = pd.DataFrame(X_r2)
 
     return pca,lda,x_pca,x_lda
 
-def build_pipe(x_train,y_train,x_test,y_test):
+def build_pipe(x_train, y_train, x_test, y_test):
     """
     This function takes:
     :param x_train: matrix of features in training set
@@ -614,8 +614,8 @@ def bar_chart():
     plt.show()
     plt.savefig('alg comparison.png')
 
-def scatterplot_matrix(x,y):
-    dat=pd.concat([x,y],axis=1,join='inner')
+def scatterplot_matrix(x, y):
+    dat=pd.concat([x, y],axis=1,join='inner')
     fig = ff.create_scatterplotmatrix(dat, diag='histogram', index='Group',
                                   height=800, width=800)
     py.iplot(fig, filename='Histograms along Diagonal Subplots')
@@ -655,24 +655,24 @@ def plot_confusion_matrix(cm, classes,
 
 def main():
     # Initialization
-    raw_data=load_data()
-    x,y=preprocess_data(raw_data)
+    raw_data = load_data()
+    x,y = preprocess_data(raw_data)
     x_train, x_test, y_train, y_test=train_test_split(x, y, test_size=.2, random_state=123)
     # pca,lda,x_pca_train,x_lda_train=run_PCA_LDA(x_train,y_train,components=10)
     clf=decision_tree(x_train, y_train)
     # x_lda_test=lda.transform(x_test)
     # x_pca_test=pca.transform(x_test)
-    y_pred=clf.predict(x_test)
+    y_pred = clf.predict(x_test)
 
     # Show confusion Matrix
     cnf_matrix=confusion_matrix(y_test, y_pred)
     #DX: 0: Dementia, 1:MCI to Dementia; 2: MCI; 3: NL
-    class_names=list(['Dementia','Normal'])
-    plot_confusion_matrix(cnf_matrix, classes=class_names,title='Confusion matrix')
+    class_names = list(['Dementia','Normal'])
+    plot_confusion_matrix(cnf_matrix, classes=class_names,title = 'Confusion matrix')
 
     # Perform accuracy Calculation
-    train_ac_score=accuracy_score(y_train,clf.predict(x_train))
-    test_ac_score=accuracy_score(y_test,y_pred)
+    train_ac_score=accuracy_score(y_train, clf.predict(x_train))
+    test_ac_score=accuracy_score(y_test, y_pred)
     print('Training Data Accuracy Score: %1.4f' % train_ac_score)
     print('Test Data Score: %1.4f' % test_ac_score)
 
