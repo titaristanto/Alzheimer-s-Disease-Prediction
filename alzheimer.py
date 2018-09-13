@@ -41,13 +41,13 @@ def load_data():
     :return: A pandas dataframe of raw data
     """
     url = 'https://raw.githubusercontent.com/titaristanto/Alzheimer-s-Disease-Prediction/master/alzheimer_input.csv'
-    df = pd.read_csv(url,low_memory=False)
-    #df=shuffle(df)
-    raw_gen = df.loc[:,['AGE', 'PTGENDER', 'PTEDUCAT', 'PTMARRY','APOE4','DX']]
+    df = pd.read_csv(url, low_memory=False)
+    #df = shuffle(df)
+    raw_gen = df.loc[:, ['AGE', 'PTGENDER', 'PTEDUCAT', 'PTMARRY','APOE4','DX']]
     raw_cognitive_test = df.loc[:,['ADAS11', 'MMSE', 'RAVLT_immediate']]
-    raw_MRI = df.loc[:,['Ventricles', 'Hippocampus', 'WholeBrain', 'Entorhinal', 'Fusiform','MidTemp']]
-    raw_PET = df.loc[:,['FDG','AV45']]
-    raw_CSF = df.loc[:,['ABETA_UPENNBIOMK9_04_19_17','TAU_UPENNBIOMK9_04_19_17','PTAU_UPENNBIOMK9_04_19_17']]
+    raw_MRI = df.loc[:, ['Ventricles', 'Hippocampus', 'WholeBrain', 'Entorhinal', 'Fusiform','MidTemp']]
+    raw_PET = df.loc[:, ['FDG','AV45']]
+    raw_CSF = df.loc[:, ['ABETA_UPENNBIOMK9_04_19_17','TAU_UPENNBIOMK9_04_19_17','PTAU_UPENNBIOMK9_04_19_17']]
 
     # Other Raw Data
     raw_biomarkers=df.loc[:,['CEREBELLUMGREYMATTER_UCBERKELEYAV45_10_17_16',
@@ -289,89 +289,88 @@ def load_data():
                             'WM_HYPOINTENSITIES_SIZE_UCBERKELEYAV45_10_17_16'
                                     ]]
 
-    raw_data=pd.concat([raw_gen,raw_cognitive_test,raw_biomarkers],axis=1,join='inner')
+    raw_data = pd.concat([raw_gen, raw_cognitive_test, raw_biomarkers], axis=1, join='inner')
     return raw_data
 
 def preprocess_data(raw_data):
     """This function 'cleans' the raw data from missing data points and converts some
     variables from numerical into categorical using label encoder"""
     # Drops missing values
-    raw_data_cleaned=raw_data.dropna(how = 'any')
+    raw_data_cleaned = raw_data.dropna(how = 'any')
 
     # Converts 'DX' to 2 labels only: MCI is considered Dementia
-    raw_data_cleaned=conv_binary(raw_data_cleaned)
+    raw_data_cleaned = conv_binary(raw_data_cleaned)
 
     # Sets some features as categorical
     # Remarks: PTGENDER: 0:Female; 1: Male -- #PTMARRY: 0:Divorced; 1: Married; 2: Never Married 4: Widowed
-    xcat_p = raw_data_cleaned[['PTGENDER','PTMARRY','APOE4']]
-    raw_data_cleaned.drop(['PTGENDER','PTMARRY','APOE4'], axis=1, inplace=True)
+    xcat_p = raw_data_cleaned[['PTGENDER', 'PTMARRY', 'APOE4']]
+    raw_data_cleaned.drop(['PTGENDER', 'PTMARRY', 'APOE4'], axis=1, inplace=True)
 
     # Extracts label. Remarks: #DX: 0: Dementia, 1:Normal
     y_p = raw_data_cleaned[['DX']]
     raw_data_cleaned.drop(['DX'], axis=1, inplace=True)
 
     le = preprocessing.LabelEncoder()
-    xcat=xcat_p.apply(le.fit_transform)
-    x=pd.concat([xcat,raw_data_cleaned], axis=1, join='inner')
+    xcat = xcat_p.apply(le.fit_transform)
+    x = pd.concat([xcat,raw_data_cleaned], axis=1, join='inner')
 
     # Sets 'DX' (AD or Not) as categorical
-    y=y_p.apply(le.fit_transform)
-    comb=pd.concat([x,y], axis=1, join='inner')
-    clean_comb=clean_data(comb)
+    y = y_p.apply(le.fit_transform)
+    comb = pd.concat([x,y], axis=1, join='inner')
+    clean_comb = clean_data(comb)
 
     y = clean_comb[['DX']]
     clean_comb.drop(['DX'], axis=1, inplace=True)
-    return clean_comb,y
+    return clean_comb, y
 
 def clean_data(raw_data):
     """Additional data clean-up"""
-    xnum= raw_data.apply(pd.to_numeric, errors='coerce')
+    xnum = raw_data.apply(pd.to_numeric, errors='coerce')
     xnum = xnum.dropna()
     return xnum
 
 def conv_binary(raw_data_cleaned):
     """Converts 'DX' to 2 labels only: MCI is considered Dementia"""
-    raw_data_cleaned=raw_data_cleaned.replace('Dementia to MCI', 'Dementia')
-    raw_data_cleaned=raw_data_cleaned.replace('MCI', 'Dementia')
-    raw_data_cleaned=raw_data_cleaned.replace('MCI to Dementia', 'Dementia')
-    raw_data_cleaned=raw_data_cleaned.replace('NL to MCI', 'NL')
-    raw_data_cleaned=raw_data_cleaned.replace('MCI to NL', 'NL')
-    raw_data_cleaned=raw_data_cleaned.replace('NL to Dementia', 'Dementia')
+    raw_data_cleaned = raw_data_cleaned.replace('Dementia to MCI', 'Dementia')
+    raw_data_cleaned = raw_data_cleaned.replace('MCI', 'Dementia')
+    raw_data_cleaned = raw_data_cleaned.replace('MCI to Dementia', 'Dementia')
+    raw_data_cleaned = raw_data_cleaned.replace('NL to MCI', 'NL')
+    raw_data_cleaned = raw_data_cleaned.replace('MCI to NL', 'NL')
+    raw_data_cleaned = raw_data_cleaned.replace('NL to Dementia', 'Dementia')
     return raw_data_cleaned
 
 def conv_binary2(raw_data_cleaned):
     """Converts 'DX' to 2 labels only: MCI is considered NL"""
-    raw_data_cleaned=raw_data_cleaned.replace('Dementia to MCI', 'Dementia')
-    raw_data_cleaned=raw_data_cleaned.replace('MCI', 'NL')
-    raw_data_cleaned=raw_data_cleaned.replace('MCI to Dementia', 'Dementia')
-    raw_data_cleaned=raw_data_cleaned.replace('NL to MCI', 'NL')
-    raw_data_cleaned=raw_data_cleaned.replace('MCI to NL', 'NL')
-    raw_data_cleaned=raw_data_cleaned.replace('NL to Dementia', 'Dementia')
+    raw_data_cleaned = raw_data_cleaned.replace('Dementia to MCI', 'Dementia')
+    raw_data_cleaned = raw_data_cleaned.replace('MCI', 'NL')
+    raw_data_cleaned = raw_data_cleaned.replace('MCI to Dementia', 'Dementia')
+    raw_data_cleaned = raw_data_cleaned.replace('NL to MCI', 'NL')
+    raw_data_cleaned = raw_data_cleaned.replace('MCI to NL', 'NL')
+    raw_data_cleaned = raw_data_cleaned.replace('NL to Dementia', 'Dementia')
     return raw_data_cleaned
 
 def split_data(x, y):
     """This function splits the data into training and test data"""
     train_split=0.8 # fraction of the data set used in the training set
-    m=x.shape[0] # number of data points
+    m = x.shape[0] # number of data points
 
-    x_train = x.iloc[0:int(m*train_split),:]
-    y_train = y.iloc[0:int(m*train_split),:]
-    x_test = x.iloc[int(m*train_split)+1:m-1,:]
-    y_test = y.iloc[int(m*train_split)+1:m-1,:]
+    x_train = x.iloc[0: int(m * train_split), :]
+    y_train = y.iloc[0: int(m * train_split), :]
+    x_test = x.iloc[int(m * train_split) + 1: m - 1, :]
+    y_test = y.iloc[int(m * train_split) + 1: m - 1, :]
     return x_train, y_train, x_test, y_test
 
 def decision_tree(x_train, y_train):
     """This function trains the inputted pair of features and label, then returns the trained classifier.
     Cross-validation is performed to avoid overfitting"""
     #clf=DecisionTreeClassifier(criterion="gini",min_samples_split=15,random_state=0)
-    clf = RandomForestClassifier(n_estimators=80,max_depth=5, random_state=0)
+    clf = RandomForestClassifier(n_estimators=80, max_depth=5, random_state=0)
     #clf = ExtraTreesClassifier(n_estimators=80, max_depth=30, random_state=0)
-    #clf=AdaBoostClassifier(n_estimators=25, random_state=0)
+    #clf = AdaBoostClassifier(n_estimators=25, random_state=0)
     clf.fit(x_train, y_train)
 
-    scores=cross_val_score(clf, x_train, y_train['DX'], cv=10)
-    print("cross_val_score mean: {:.3f} (std: {:.3f})".format(scores.mean(),scores.std()),end="\n\n" )
-
+    scores = cross_val_score(clf, x_train, y_train['DX'], cv=10)
+    print("cross_val_score mean: {:.3f} (std: {:.3f})".format(scores.mean(), scores.std()), end="\n\n" )
     return clf
 
 def kfold_CV(models, x, y, k=10):
@@ -384,8 +383,8 @@ def kfold_CV(models, x, y, k=10):
       sum_train = 0
       sum_dev_test = 0
       for train_index, dev_test_index in rs.split(x):
-        x_pca_train,x_lda_train, x_pca_dev_test, x_lda_dev_test = \
-          run_PCA_LDA(x.iloc[train_index],y.iloc[train_index], \
+        x_pca_train, x_lda_train, x_pca_dev_test, x_lda_dev_test = \
+          run_PCA_LDA(x.iloc[train_index], y.iloc[train_index], \
                       x.iloc[dev_test_index], components=10)
 
         model.fit(x_lda_train, y.iloc[train_index])
@@ -395,8 +394,8 @@ def kfold_CV(models, x, y, k=10):
            accuracy_score(y.iloc[train_index], model.predict(x_lda_train))
         dev_testing_score = accuracy_score(y.iloc[dev_test_index], predicted_labels)
 
-        cnf_matrix=confusion_matrix(y.iloc[dev_test_index], predicted_labels)
-        class_names=list(['Dementia','NL'])
+        cnf_matrix = confusion_matrix(y.iloc[dev_test_index], predicted_labels)
+        class_names = list(['Dementia', 'NL'])
         # plot_confusion_matrix(cnf_matrix, classes=class_names, title='Confusion matrix')
 
         sum_train = sum_train + training_score;
@@ -427,16 +426,15 @@ def run_PCA_LDA(X, y, xtest, components):
     Xtest_r = pca1.transform(xtest)
 
     lda = LinearDiscriminantAnalysis(n_components=10)
-    lda1= lda.fit(X, y)
+    lda1 = lda.fit(X, y)
     X_r2 = lda1.transform(X)
-    # print('xr2', X_r2.shape)
     Xtest_r2 = lda1.transform(xtest)
 
     x_pca = pd.DataFrame(X_r)
     x_lda = pd.DataFrame(X_r2)
     xtest_pca = pd.DataFrame(Xtest_r)
     xtest_lda = pd.DataFrame(Xtest_r2)
-    y=pd.DataFrame(y)
+    y = pd.DataFrame(y)
     return x_pca, x_lda, xtest_pca, xtest_lda
 
 def run_PCA_LDA1(X, y, components):
@@ -451,7 +449,7 @@ def run_PCA_LDA1(X, y, components):
     :return:
     """
     y = np.ravel(y)
-    target_names = ['Dementia','Normal']
+    target_names = ['Dementia', 'Normal']
 
     pca = PCA(n_components=components)
     X_r = pca.fit(X).transform(X)
@@ -487,7 +485,7 @@ def run_PCA_LDA1(X, y, components):
     x_pca = pd.DataFrame(X_r)
     x_lda = pd.DataFrame(X_r2)
 
-    return pca,lda,x_pca,x_lda
+    return pca, lda, x_pca, x_lda
 
 def build_pipe(x_train, y_train, x_test, y_test):
     """
@@ -500,35 +498,35 @@ def build_pipe(x_train, y_train, x_test, y_test):
     and trains 4 different classifiers, returning score comparison of training, dev,
     and test set for each of them.
     """
-    clf_dt=tree.DecisionTreeClassifier(random_state=0)
+    clf_dt = tree.DecisionTreeClassifier(random_state=0)
     pipe_dt = Pipeline([('scl', StandardScaler()),
 			('pca', PCA(n_components=10)),
 			('clf', clf_dt)])
-    scores_dt=cross_val_score(clf_dt, x_train, y_train['DX'], cv=10)
+    scores_dt = cross_val_score(clf_dt, x_train, y_train['DX'], cv=10)
 
-    clf_rf=RandomForestClassifier(n_estimators=2, max_depth=1,random_state=0)
+    clf_rf = RandomForestClassifier(n_estimators=2, max_depth=1,random_state=0)
     pipe_rf = Pipeline([('scl', StandardScaler()),
 			('pca', PCA(n_components=10)),
-			('clf',clf_rf)])
+			('clf', clf_rf)])
     scores_rf=cross_val_score(clf_rf, x_train, y_train['DX'], cv=10)
 
-    clf_et=ExtraTreesClassifier(n_estimators=80, max_depth=30, random_state=0)
+    clf_et = ExtraTreesClassifier(n_estimators=80, max_depth=30, random_state=0)
     pipe_et = Pipeline([('scl', StandardScaler()),
 			('pca', PCA(n_components=10)),
 			('clf', clf_et)])
-    scores_et=cross_val_score(clf_et, x_train, y_train['DX'], cv=10)
+    scores_et = cross_val_score(clf_et, x_train, y_train['DX'], cv=10)
 
-    clf_ab=AdaBoostClassifier(n_estimators=25, random_state=0)
+    clf_ab = AdaBoostClassifier(n_estimators=25, random_state=0)
     pipe_ab = Pipeline([('scl', StandardScaler()),
 			('pca', PCA(n_components=10)),
 			('clf', clf_ab)])
     scores_ab=cross_val_score(clf_ab, x_train, y_train['DX'], cv=10)
 
-    pipelines = [pipe_dt, pipe_rf, pipe_et,pipe_ab]
+    pipelines = [pipe_dt, pipe_rf, pipe_et, pipe_ab]
     pipe_dict = {0: 'Decision Tree', 1: 'Random Forest', 2: 'Extra Tree',3: "AdaBoost"}
     for pipe in pipelines:
 	    pipe.fit(x_train, y_train)
-    cval_list=[np.average(scores_dt),np.average(scores_rf),np.average(scores_et),np.average(scores_ab)]
+    cval_list = [np.average(scores_dt), np.average(scores_rf), np.average(scores_et), np.average(scores_ab)]
 
     # Compare accuracies
     for idx, val in enumerate(pipelines):
@@ -579,12 +577,12 @@ def bar_chart():
     """Visualizes scores recorded from previous computations"""
     url='https://raw.githubusercontent.com/titaristanto/Alzheimer-s-Disease-Prediction/master/Recap.csv'
     df = pd.read_csv(url)
-    n_groups=df.shape[0]
-    index_df=df.loc[:,['Method(s)']]
-    index_name=[index_df.values[i][0] for i in range(index_df.shape[0])]
-    train_acc=df.loc[:,['Training Score']]
-    dev_acc=df.loc[:,['Dev Score']]
-    test_acc=df.loc[:,['Test Score']]
+    n_groups = df.shape[0]
+    index_df = df.loc[:, ['Method(s)']]
+    index_name = [index_df.values[i][0] for i in range(index_df.shape[0])]
+    train_acc = df.loc[:, ['Training Score']]
+    dev_acc = df.loc[:, ['Dev Score']]
+    test_acc = df.loc[:, ['Test Score']]
     # create plot
     fig, ax = plt.subplots()
     index = np.arange(n_groups)
@@ -615,7 +613,7 @@ def bar_chart():
     plt.savefig('alg comparison.png')
 
 def scatterplot_matrix(x, y):
-    dat=pd.concat([x, y],axis=1,join='inner')
+    dat = pd.concat([x, y], axis=1, join='inner')
     fig = ff.create_scatterplotmatrix(dat, diag='histogram', index='Group',
                                   height=800, width=800)
     py.iplot(fig, filename='Histograms along Diagonal Subplots')
@@ -630,7 +628,6 @@ def plot_confusion_matrix(cm, classes,
         print("Normalized confusion matrix")
     else:
         print('Confusion matrix')
-
     print(cm)
 
     plt.figure()
@@ -657,30 +654,30 @@ def main():
     # Initialization
     raw_data = load_data()
     x,y = preprocess_data(raw_data)
-    x_train, x_test, y_train, y_test=train_test_split(x, y, test_size=.2, random_state=123)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=.2, random_state=123)
     # pca,lda,x_pca_train,x_lda_train=run_PCA_LDA(x_train,y_train,components=10)
-    clf=decision_tree(x_train, y_train)
+    clf = decision_tree(x_train, y_train)
     # x_lda_test=lda.transform(x_test)
     # x_pca_test=pca.transform(x_test)
     y_pred = clf.predict(x_test)
 
     # Show confusion Matrix
-    cnf_matrix=confusion_matrix(y_test, y_pred)
+    cnf_matrix = confusion_matrix(y_test, y_pred)
     #DX: 0: Dementia, 1:MCI to Dementia; 2: MCI; 3: NL
-    class_names = list(['Dementia','Normal'])
+    class_names = list(['Dementia', 'Normal'])
     plot_confusion_matrix(cnf_matrix, classes=class_names,title = 'Confusion matrix')
 
     # Perform accuracy Calculation
-    train_ac_score=accuracy_score(y_train, clf.predict(x_train))
-    test_ac_score=accuracy_score(y_test, y_pred)
+    train_ac_score = accuracy_score(y_train, clf.predict(x_train))
+    test_ac_score = accuracy_score(y_test, y_pred)
     print('Training Data Accuracy Score: %1.4f' % train_ac_score)
     print('Test Data Score: %1.4f' % test_ac_score)
 
     # Feature Importances
-    feature_importances(x_train,clf)
+    feature_importances(x_train, clf)
 
     # Perform Comparison using Pipeline
-    build_pipe(x_train,y_train,x_test,y_test)
+    build_pipe(x_train, y_train, x_test, y_test)
 
     # Algorithm Comparison
     bar_chart()
